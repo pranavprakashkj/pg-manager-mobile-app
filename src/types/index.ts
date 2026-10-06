@@ -1,31 +1,46 @@
+import { Timestamp } from "firebase/firestore";
+
+// ─── Building ───
 export interface Building {
   id: string;
   name: string;
-  createdAt: number;
-  updatedAt: number;
-  active: boolean;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
+export interface BuildingFormData {
+  name: string;
+}
+
+// ─── Floor ───
 export interface Floor {
   id: string;
   buildingId: string;
   name: string;
-  createdAt: number;
-  updatedAt: number;
-  active: boolean;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
+export interface FloorFormData {
+  name: string;
+}
+
+// ─── Room ───
 export interface Room {
   id: string;
   buildingId: string;
   floorId: string;
   roomNumber: string;
-  createdAt: number;
-  updatedAt: number;
-  active: boolean;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
-export type BedStatus = 'Vacant' | 'Occupied' | 'Reserved' | 'Maintenance';
+// ─── Bed ───
+export type BedStatus = "vacant" | "occupied" | "reserved" | "maintenance";
 
 export interface Bed {
   id: string;
@@ -36,11 +51,12 @@ export interface Bed {
   status: BedStatus;
   defaultMonthlyRate: number;
   defaultDailyRate: number;
-  createdAt: number;
-  updatedAt: number;
-  active: boolean;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
+// ─── Guest ───
 export interface Guest {
   id: string;
   name: string;
@@ -52,11 +68,12 @@ export interface Guest {
   emergencyContact?: string;
   address?: string;
   notes?: string;
-  createdAt: number;
-  updatedAt: number;
-  active: boolean;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
+// ─── Stay ───
 export interface BaseStay {
   id: string;
   guestId: string;
@@ -65,37 +82,39 @@ export interface BaseStay {
   roomId: string;
   bedId: string;
   securityDepositAmount: number;
-  securityDepositDate?: number;
-  createdAt: number;
-  updatedAt: number;
-  active: boolean;
+  securityDepositDate?: Timestamp;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 export interface MonthlyStay extends BaseStay {
-  type: 'monthly';
+  type: "monthly";
   monthlyRent: number;
-  joiningDate: number;
+  joiningDate: Timestamp;
   rentDueDay: number;
 }
 
 export interface DailyStay extends BaseStay {
-  type: 'daily';
+  type: "daily";
   dailyRate: number;
-  checkInDate: number;
-  checkOutDate: number;
+  checkInDate: Timestamp;
+  checkOutDate: Timestamp;
   dailyCheckInGroupId?: string;
 }
 
 export type Stay = MonthlyStay | DailyStay;
 
+// ─── Daily Check-In Group ───
 export interface DailyCheckInGroup {
   id: string;
-  checkInDate: number;
-  checkOutDate: number;
-  createdAt: number;
+  checkInDate: Timestamp;
+  checkOutDate: Timestamp;
+  createdAt: Timestamp;
 }
 
-export type PaymentStatus = 'Paid' | 'Partial' | 'Upcoming' | 'Due' | 'Overdue';
+// ─── Payment ───
+export type PaymentStatus = "Paid" | "Partial" | "Upcoming" | "Due" | "Overdue";
 
 export interface Payment {
   id: string;
@@ -103,9 +122,12 @@ export interface Payment {
   guestId: string;
   amountDue: number;
   amountPaid: number;
-  dueDate: number;
+  dueDate: Timestamp;
   status: PaymentStatus;
-  createdAt: number;
-  updatedAt: number;
-  billingPeriod?: string; // e.g., "2026-10" to ensure idempotency for monthly generation
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+  billingPeriod?: string;
 }
+
+export type { RoomFormInput } from "../features/rooms/schemas";
+export type { BedFormInput, BedUpdateInput } from "../features/beds/schemas";

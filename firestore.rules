@@ -1,0 +1,77 @@
+rules_version = "2";
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function isBuildingActive(bId) {
+      let bRef = /databases/$(database)/documents/buildings/$(bId);
+      return exists(bRef) && get(bRef).data.isActive == true;
+    }
+
+    function isValidFloor(fId, bId) {
+      let fRef = /databases/$(database)/documents/floors/$(fId);
+      return exists(fRef) && get(fRef).data.isActive == true && get(fRef).data.buildingId == bId;
+    }
+
+    function isValidRoom(rId, fId, bId) {
+      let rRef = /databases/$(database)/documents/rooms/$(rId);
+      return exists(rRef) && get(rRef).data.isActive == true && get(rRef).data.floorId == fId && get(rRef).data.buildingId == bId;
+    }
+
+    // ─── Buildings ───
+    match /buildings/{buildingId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ─── Floors ───
+    match /floors/{floorId} {
+      allow read, delete: if isAdmin();
+      
+      allow create: if isAdmin() 
+        && request.resource.data.keys().hasAll(['buildingId']) 
+        && isBuildingActive(request.resource.data.buildingId);
+        
+      allow update: if isAdmin()
+        && isBuildingActive(request.resource.data.buildingId);
+    }
+
+    // ─── Rooms ───
+    match /rooms/{roomId} {
+      allow read, delete: if isAdmin();
+
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasAll(['buildingId', 'floorId'])
+        && isBuildingActive(request.resource.data.buildingId)
+        && isValidFloor(request.resource.data.floorId, request.resource.data.buildingId);
+
+      allow update: if isAdmin()
+        && isBuildingActive(request.resource.data.buildingId)
+        && isValidFloor(request.resource.data.floorId, request.resource.data.buildingId);
+    }
+
+    // ─── Beds ───
+    match /beds/{bedId} {
+      allow read, delete: if isAdmin();
+
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasAll(['buildingId', 'floorId', 'roomId'])
+        && isBuildingActive(request.resource.data.buildingId)
+        && isValidFloor(request.resource.data.floorId, request.resource.data.buildingId)
+        && isValidRoom(request.resource.data.roomId, request.resource.data.floorId, request.resource.data.buildingId);
+
+      allow update: if isAdmin()
+        && isBuildingActive(request.resource.data.buildingId)
+        && isValidFloor(request.resource.data.floorId, request.resource.data.buildingId)
+        && isValidRoom(request.resource.data.roomId, request.resource.data.floorId, request.resource.data.buildingId);
+    }
+
+    // ─── Default deny ───
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
