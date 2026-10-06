@@ -2,11 +2,11 @@ import {
   collection,
   doc,
   getDoc,
-  addDoc,
+  writeBatch,
   updateDoc,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../../lib/firebase/config';
+import { db, auth } from '../../lib/firebase/config';
 import type { Organization } from '../../types';
 
 const COLLECTION = 'organizations';
@@ -39,13 +39,35 @@ export const organizationRepository = {
   },
 
   async create(name: string): Promise<string> {
-    const docRef = await addDoc(organizationsRef(), {
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User must be authenticated to create an organization');
+    }
+    const userId = user.uid;
+
+    const orgDocRef = doc(organizationsRef());
+    const memberDocRef = doc(db, 'organizationMembers', `${orgDocRef.id}_${userId}`);
+
+    const batch = writeBatch(db);
+    
+    batch.set(orgDocRef, {
       name: name.trim(),
       isActive: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    return docRef.id;
+
+    batch.set(memberDocRef, {
+      organizationId: orgDocRef.id,
+      userId,
+      role: 'owner',
+      status: 'active',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+    return orgDocRef.id;
   },
 
   async update(id: string, name: string): Promise<void> {

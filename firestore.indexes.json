@@ -5,6 +5,10 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "isActive",
           "order": "ASCENDING"
         },
@@ -18,6 +22,10 @@
       "collectionGroup": "floors",
       "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "buildingId",
           "order": "ASCENDING"
@@ -37,6 +45,10 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "floorId",
           "order": "ASCENDING"
         },
@@ -55,6 +67,10 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "organizationId",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "roomId",
           "order": "ASCENDING"
         },
@@ -64,6 +80,20 @@
         },
         {
           "fieldPath": "name",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "organizationMembers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
           "order": "ASCENDING"
         }
       ]
