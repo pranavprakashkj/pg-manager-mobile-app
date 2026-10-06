@@ -28,6 +28,7 @@ function docToBuilding(docSnap: import("firebase/firestore").DocumentSnapshot): 
   if (!data) throw new Error("Building document has no data");
   return {
     id: docSnap.id,
+    organizationId: data.organizationId,
     name: data.name,
     isActive: data.isActive,
     createdAt: data.createdAt,
@@ -36,26 +37,31 @@ function docToBuilding(docSnap: import("firebase/firestore").DocumentSnapshot): 
 }
 
 export const buildingRepository = {
-  async getAll(): Promise<Building[]> {
-    const q = query(buildingsRef(), where("isActive", "==", true), orderBy("name"));
+  async getAll(organizationId: string): Promise<Building[]> {
+    const q = query(buildingsRef(), where("organizationId", "==", organizationId), where("isActive", "==", true), orderBy("name"));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docToBuilding);
   },
 
-  async getById(id: string): Promise<Building> {
+  async getById(organizationId: string, id: string): Promise<Building> {
     const docSnap = await getDoc(buildingDocRef(id));
     if (!docSnap.exists()) throw new Error("Building not found");
-    return docToBuilding(docSnap);
+    const building = docToBuilding(docSnap);
+    if (building.organizationId !== organizationId) throw new Error("Unauthorized access to building");
+    return building;
   },
 
-  async findById(id: string): Promise<Building | null> {
+  async findById(organizationId: string, id: string): Promise<Building | null> {
     const docSnap = await getDoc(buildingDocRef(id));
     if (!docSnap.exists()) return null;
-    return docToBuilding(docSnap);
+    const building = docToBuilding(docSnap);
+    if (building.organizationId !== organizationId) return null;
+    return building;
   },
 
-  async create(data: BuildingFormData): Promise<string> {
+  async create(organizationId: string, data: BuildingFormData): Promise<string> {
     const docRef = await addDoc(buildingsRef(), {
+      organizationId,
       name: data.name.trim(),
       isActive: true,
       createdAt: serverTimestamp(),
@@ -64,14 +70,16 @@ export const buildingRepository = {
     return docRef.id;
   },
 
-  async update(id: string, data: BuildingFormData): Promise<void> {
+  async update(organizationId: string, id: string, data: BuildingFormData): Promise<void> {
+    await this.getById(organizationId, id); // Verify ownership
     await updateDoc(buildingDocRef(id), {
       name: data.name.trim(),
       updatedAt: serverTimestamp(),
     });
   },
 
-  async deactivate(id: string): Promise<void> {
+  async deactivate(organizationId: string, id: string): Promise<void> {
+    await this.getById(organizationId, id); // Verify ownership
     await updateDoc(buildingDocRef(id), {
       isActive: false,
       updatedAt: serverTimestamp(),

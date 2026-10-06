@@ -31,6 +31,7 @@ function docToRoom(docSnap: import("firebase/firestore").DocumentSnapshot): Room
   if (!data) throw new Error("Room document has no data");
   return {
     id: docSnap.id,
+    organizationId: data.organizationId,
     buildingId: data.buildingId,
     floorId: data.floorId,
     roomNumber: data.roomNumber,
@@ -41,9 +42,10 @@ function docToRoom(docSnap: import("firebase/firestore").DocumentSnapshot): Room
 }
 
 export const roomRepository = {
-  async getByFloorId(floorId: string): Promise<Room[]> {
+  async getByFloorId(organizationId: string, floorId: string): Promise<Room[]> {
     const q = query(
       roomsRef(),
+      where("organizationId", "==", organizationId),
       where("floorId", "==", floorId),
       where("isActive", "==", true),
       orderBy("roomNumber")
@@ -52,35 +54,39 @@ export const roomRepository = {
     return snapshot.docs.map(docToRoom);
   },
 
-  async getAllActive(): Promise<Room[]> {
-    const q = query(roomsRef(), where("isActive", "==", true));
+  async getAllActive(organizationId: string): Promise<Room[]> {
+    const q = query(roomsRef(), where("organizationId", "==", organizationId), where("isActive", "==", true));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docToRoom);
   },
 
-  async getById(id: string): Promise<Room> {
+  async getById(organizationId: string, id: string): Promise<Room> {
     const docSnap = await getDoc(roomDocRef(id));
     if (!docSnap.exists()) throw new Error("Room not found");
-    return docToRoom(docSnap);
+    const room = docToRoom(docSnap);
+    if (room.organizationId !== organizationId) throw new Error("Unauthorized access to room");
+    return room;
   },
 
-  async findById(id: string): Promise<Room | null> {
+  async findById(organizationId: string, id: string): Promise<Room | null> {
     const docSnap = await getDoc(roomDocRef(id));
     if (!docSnap.exists()) return null;
-    return docToRoom(docSnap);
+    const room = docToRoom(docSnap);
+    if (room.organizationId !== organizationId) return null;
+    return room;
   },
 
-  async create(buildingId: string, floorId: string, data: RoomFormInput): Promise<string> {
-    const floor = await floorRepository.findById(floorId);
+  async create(organizationId: string, buildingId: string, floorId: string, data: RoomFormInput): Promise<string> {
+    const floor = await floorRepository.findById(organizationId, floorId);
     if (!floor) throw new Error("Cannot add room to a nonexistent floor");
     if (!floor.isActive) throw new Error("Cannot add room to an inactive floor");
     if (floor.buildingId !== buildingId) throw new Error("Floor does not belong to the specified building");
 
-    const building = await buildingRepository.findById(buildingId);
+    const building = await buildingRepository.findById(organizationId, buildingId);
     if (!building) throw new Error("Cannot add room to a nonexistent building");
     if (!building.isActive) throw new Error("Cannot add room to an inactive building");
 
-    const existingRooms = await this.getByFloorId(floorId);
+    const existingRooms = await this.getByFloorId(organizationId, floorId);
     const isDuplicate = existingRooms.some(
       (r) => r.roomNumber.toLowerCase() === data.roomNumber.trim().toLowerCase()
     );
@@ -89,6 +95,7 @@ export const roomRepository = {
     }
 
     const docRef = await addDoc(roomsRef(), {
+      organizationId,
       buildingId,
       floorId,
       roomNumber: data.roomNumber.trim(),
@@ -99,9 +106,9 @@ export const roomRepository = {
     return docRef.id;
   },
 
-  async update(id: string, data: RoomFormInput): Promise<void> {
-    const room = await this.getById(id);
-    const existingRooms = await this.getByFloorId(room.floorId);
+  async update(organizationId: string, id: string, data: RoomFormInput): Promise<void> {
+    const room = await this.getById(organizationId, id);
+    const existingRooms = await this.getByFloorId(organizationId, room.floorId);
     const isDuplicate = existingRooms.some(
       (r) => r.id !== id && r.roomNumber.toLowerCase() === data.roomNumber.trim().toLowerCase()
     );
@@ -115,8 +122,9 @@ export const roomRepository = {
     });
   },
 
-  async deactivate(id: string): Promise<void> {
-    const activeBeds = await bedRepository.getByRoomId(id);
+  async deactivate(organizationId: string, id: string): Promise<void> {
+    await this.getById(organizationId, id); // Verify ownership
+    const activeBeds = await bedRepository.getByRoomId(organizationId, id);
     if (activeBeds.length > 0) {
       throw new Error("This room still has active beds. Deactivate or move those beds first.");
     }

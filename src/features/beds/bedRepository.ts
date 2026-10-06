@@ -31,6 +31,7 @@ function docToBed(docSnap: import("firebase/firestore").DocumentSnapshot): Bed {
   if (!data) throw new Error("Bed document has no data");
   return {
     id: docSnap.id,
+    organizationId: data.organizationId,
     buildingId: data.buildingId,
     floorId: data.floorId,
     roomId: data.roomId,
@@ -45,9 +46,10 @@ function docToBed(docSnap: import("firebase/firestore").DocumentSnapshot): Bed {
 }
 
 export const bedRepository = {
-  async getByFloorId(floorId: string): Promise<Bed[]> {
+  async getByFloorId(organizationId: string, floorId: string): Promise<Bed[]> {
     const q = query(
       bedsRef(),
+      where("organizationId", "==", organizationId),
       where("floorId", "==", floorId),
       where("isActive", "==", true)
     );
@@ -55,9 +57,10 @@ export const bedRepository = {
     return snapshot.docs.map(docToBed);
   },
 
-  async getByRoomId(roomId: string): Promise<Bed[]> {
+  async getByRoomId(organizationId: string, roomId: string): Promise<Bed[]> {
     const q = query(
       bedsRef(),
+      where("organizationId", "==", organizationId),
       where("roomId", "==", roomId),
       where("isActive", "==", true),
       orderBy("name")
@@ -66,45 +69,49 @@ export const bedRepository = {
     return snapshot.docs.map(docToBed);
   },
 
-  async getAllActive(): Promise<Bed[]> {
-    const q = query(bedsRef(), where("isActive", "==", true));
+  async getAllActive(organizationId: string): Promise<Bed[]> {
+    const q = query(bedsRef(), where("organizationId", "==", organizationId), where("isActive", "==", true));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docToBed);
   },
 
-  async getById(id: string): Promise<Bed> {
+  async getById(organizationId: string, id: string): Promise<Bed> {
     const docSnap = await getDoc(bedDocRef(id));
     if (!docSnap.exists()) throw new Error("Bed not found");
-    return docToBed(docSnap);
+    const bed = docToBed(docSnap);
+    if (bed.organizationId !== organizationId) throw new Error("Unauthorized access to bed");
+    return bed;
   },
 
-  async findById(id: string): Promise<Bed | null> {
+  async findById(organizationId: string, id: string): Promise<Bed | null> {
     const docSnap = await getDoc(bedDocRef(id));
     if (!docSnap.exists()) return null;
-    return docToBed(docSnap);
+    const bed = docToBed(docSnap);
+    if (bed.organizationId !== organizationId) return null;
+    return bed;
   },
 
-  async create(buildingId: string, floorId: string, roomId: string, data: BedFormInput): Promise<string> {
+  async create(organizationId: string, buildingId: string, floorId: string, roomId: string, data: BedFormInput): Promise<string> {
     // Validate Room
-    const room = await roomRepository.findById(roomId);
+    const room = await roomRepository.findById(organizationId, roomId);
     if (!room) throw new Error("Cannot add bed to a nonexistent room");
     if (!room.isActive) throw new Error("Cannot add bed to an inactive room");
     if (room.floorId !== floorId) throw new Error("Room does not belong to the specified floor");
     if (room.buildingId !== buildingId) throw new Error("Room does not belong to the specified building");
 
     // Validate Floor
-    const floor = await floorRepository.findById(floorId);
+    const floor = await floorRepository.findById(organizationId, floorId);
     if (!floor) throw new Error("Cannot add bed to a nonexistent floor");
     if (!floor.isActive) throw new Error("Cannot add bed to an inactive floor");
     if (floor.buildingId !== buildingId) throw new Error("Floor does not belong to the specified building");
 
     // Validate Building
-    const building = await buildingRepository.findById(buildingId);
+    const building = await buildingRepository.findById(organizationId, buildingId);
     if (!building) throw new Error("Cannot add bed to a nonexistent building");
     if (!building.isActive) throw new Error("Cannot add bed to an inactive building");
 
     // Check for duplicates
-    const existingBeds = await this.getByRoomId(roomId);
+    const existingBeds = await this.getByRoomId(organizationId, roomId);
     const isDuplicate = existingBeds.some(
       (b) => b.name.toLowerCase() === data.name.trim().toLowerCase()
     );
@@ -113,6 +120,7 @@ export const bedRepository = {
     }
 
     const docRef = await addDoc(bedsRef(), {
+      organizationId,
       buildingId,
       floorId,
       roomId,
@@ -127,11 +135,11 @@ export const bedRepository = {
     return docRef.id;
   },
 
-  async update(id: string, data: BedUpdateInput): Promise<void> {
-    const bed = await this.getById(id);
+  async update(organizationId: string, id: string, data: BedUpdateInput): Promise<void> {
+    const bed = await this.getById(organizationId, id);
     
     // Check for duplicates (excluding self)
-    const existingBeds = await this.getByRoomId(bed.roomId);
+    const existingBeds = await this.getByRoomId(organizationId, bed.roomId);
     const isDuplicate = existingBeds.some(
       (b) => b.id !== id && b.name.toLowerCase() === data.name.trim().toLowerCase()
     );
@@ -158,8 +166,8 @@ export const bedRepository = {
     });
   },
 
-  async deactivate(id: string): Promise<void> {
-    const bed = await this.getById(id);
+  async deactivate(organizationId: string, id: string): Promise<void> {
+    const bed = await this.getById(organizationId, id);
     if (bed.status === "occupied") {
       throw new Error("Cannot deactivate an occupied bed");
     }

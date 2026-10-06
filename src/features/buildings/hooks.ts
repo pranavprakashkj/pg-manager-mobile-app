@@ -1,51 +1,64 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { buildingRepository } from "./buildingRepository";
 import type { BuildingFormData } from "../../types";
-
-const BUILDINGS_KEY = ["buildings"] as const;
+import { useOrganizationStore } from "../../stores/organizationStore";
 
 export function useBuildings() {
+  const activeOrganizationId = useOrganizationStore((s) => s.activeOrganizationId);
   return useQuery({
-    queryKey: BUILDINGS_KEY,
-    queryFn: () => buildingRepository.getAll(),
+    queryKey: ["buildings", activeOrganizationId],
+    queryFn: () => buildingRepository.getAll(activeOrganizationId!),
+    enabled: !!activeOrganizationId,
   });
 }
 
 export function useBuilding(id: string) {
+  const activeOrganizationId = useOrganizationStore((s) => s.activeOrganizationId);
   return useQuery({
-    queryKey: [...BUILDINGS_KEY, id],
-    queryFn: () => buildingRepository.getById(id),
-    enabled: !!id,
+    queryKey: ["buildings", activeOrganizationId, id],
+    queryFn: () => buildingRepository.getById(activeOrganizationId!, id),
+    enabled: !!activeOrganizationId && !!id,
   });
 }
 
 export function useCreateBuilding() {
   const queryClient = useQueryClient();
+  const activeOrganizationId = useOrganizationStore((s) => s.activeOrganizationId);
   return useMutation({
-    mutationFn: (data: BuildingFormData) => buildingRepository.create(data),
+    mutationFn: (data: BuildingFormData) => {
+      if (!activeOrganizationId) throw new Error("No active organization");
+      return buildingRepository.create(activeOrganizationId, data);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: BUILDINGS_KEY });
+      queryClient.invalidateQueries({ queryKey: ["buildings", activeOrganizationId] });
     },
   });
 }
 
 export function useUpdateBuilding() {
   const queryClient = useQueryClient();
+  const activeOrganizationId = useOrganizationStore((s) => s.activeOrganizationId);
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: BuildingFormData }) =>
-      buildingRepository.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: BuildingFormData }) => {
+      if (!activeOrganizationId) throw new Error("No active organization");
+      return buildingRepository.update(activeOrganizationId, id, data);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: BUILDINGS_KEY });
+      queryClient.invalidateQueries({ queryKey: ["buildings", activeOrganizationId] });
     },
   });
 }
 
 export function useDeactivateBuilding() {
   const queryClient = useQueryClient();
+  const activeOrganizationId = useOrganizationStore((s) => s.activeOrganizationId);
   return useMutation({
-    mutationFn: (id: string) => buildingRepository.deactivate(id),
+    mutationFn: (id: string) => {
+      if (!activeOrganizationId) throw new Error("No active organization");
+      return buildingRepository.deactivate(activeOrganizationId, id);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: BUILDINGS_KEY });
+      queryClient.invalidateQueries({ queryKey: ["buildings", activeOrganizationId] });
     },
   });
 }

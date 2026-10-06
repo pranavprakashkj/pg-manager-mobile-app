@@ -1,8 +1,40 @@
 import { Timestamp } from "firebase/firestore";
 
+// ─── Tenant & Auth Models ───
+export interface User {
+  id: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  isActive: boolean;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+export type Role = "owner" | "admin";
+export type MembershipStatus = "active" | "invited" | "inactive";
+
+export interface OrganizationMember {
+  id: string;
+  organizationId: string;
+  userId: string;
+  role: Role;
+  status: MembershipStatus;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
 // ─── Building ───
 export interface Building {
   id: string;
+  organizationId: string;
   name: string;
   isActive: boolean;
   createdAt: Timestamp;
@@ -16,6 +48,7 @@ export interface BuildingFormData {
 // ─── Floor ───
 export interface Floor {
   id: string;
+  organizationId: string;
   buildingId: string;
   name: string;
   sortOrder: number;
@@ -31,6 +64,7 @@ export interface FloorFormData {
 // ─── Room ───
 export interface Room {
   id: string;
+  organizationId: string;
   buildingId: string;
   floorId: string;
   roomNumber: string;
@@ -44,6 +78,7 @@ export type BedStatus = "vacant" | "occupied" | "reserved" | "maintenance";
 
 export interface Bed {
   id: string;
+  organizationId: string;
   buildingId: string;
   floorId: string;
   roomId: string;
@@ -59,6 +94,7 @@ export interface Bed {
 // ─── Guest ───
 export interface Guest {
   id: string;
+  organizationId: string;
   name: string;
   phoneNumber: string;
   email?: string;
@@ -76,6 +112,7 @@ export interface Guest {
 // ─── Stay ───
 export interface BaseStay {
   id: string;
+  organizationId: string;
   guestId: string;
   buildingId: string;
   floorId: string;
@@ -108,6 +145,7 @@ export type Stay = MonthlyStay | DailyStay;
 // ─── Daily Check-In Group ───
 export interface DailyCheckInGroup {
   id: string;
+  organizationId: string;
   checkInDate: Timestamp;
   checkOutDate: Timestamp;
   createdAt: Timestamp;
@@ -118,6 +156,7 @@ export type PaymentStatus = "Paid" | "Partial" | "Upcoming" | "Due" | "Overdue";
 
 export interface Payment {
   id: string;
+  organizationId: string;
   stayId: string;
   guestId: string;
   amountDue: number;

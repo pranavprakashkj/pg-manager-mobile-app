@@ -38,40 +38,44 @@ describe("bedRepository", () => {
 
   describe("create", () => {
     it("creates a bed defaulting to vacant", async () => {
-      (roomRepository.findById as jest.Mock).mockResolvedValue({ isActive: true, floorId: "f1", buildingId: "b1" });
-      (floorRepository.findById as jest.Mock).mockResolvedValue({ isActive: true, buildingId: "b1" });
+      (roomRepository.findById as jest.Mock).mockResolvedValue({ isActive: true,
+      organizationId: "org123", floorId: "f1", buildingId: "b1" });
+      (floorRepository.findById as jest.Mock).mockResolvedValue({ isActive: true,
+      organizationId: "org123", buildingId: "b1" });
       (buildingRepository.findById as jest.Mock).mockResolvedValue({ isActive: true });
       (getDocs as jest.Mock).mockResolvedValue({ docs: [] });
       (addDoc as jest.Mock).mockResolvedValue({ id: "bed1" });
 
-      await bedRepository.create("b1", "f1", "r1", { name: "Bed A", defaultMonthlyRate: 1000, defaultDailyRate: 100 });
+      await bedRepository.create("org123", "b1", "f1", "r1", { name: "Bed A", defaultMonthlyRate: 1000, defaultDailyRate: 100 });
       expect(addDoc).toHaveBeenCalledWith("mock-collection", expect.objectContaining({ status: "vacant" }));
     });
 
     it("rejects nonexistent room", async () => {
       (roomRepository.findById as jest.Mock).mockResolvedValue(null);
-      await expect(bedRepository.create("b1", "f1", "r1", { name: "A", defaultMonthlyRate: 100, defaultDailyRate: 10 })).rejects.toThrow("nonexistent room");
+      await expect(bedRepository.create("org123", "b1", "f1", "r1", { name: "A", defaultMonthlyRate: 100, defaultDailyRate: 10 })).rejects.toThrow("nonexistent room");
     });
     
     it("rejects duplicate active bed name", async () => {
-      (roomRepository.findById as jest.Mock).mockResolvedValue({ isActive: true, floorId: "f1", buildingId: "b1" });
-      (floorRepository.findById as jest.Mock).mockResolvedValue({ isActive: true, buildingId: "b1" });
+      (roomRepository.findById as jest.Mock).mockResolvedValue({ isActive: true,
+      organizationId: "org123", floorId: "f1", buildingId: "b1" });
+      (floorRepository.findById as jest.Mock).mockResolvedValue({ isActive: true,
+      organizationId: "org123", buildingId: "b1" });
       (buildingRepository.findById as jest.Mock).mockResolvedValue({ isActive: true });
       (getDocs as jest.Mock).mockResolvedValue({ docs: [{ data: () => ({ name: "A" }), id: "dup" }] });
       
-      await expect(bedRepository.create("b1", "f1", "r1", { name: "A", defaultMonthlyRate: 100, defaultDailyRate: 10 })).rejects.toThrow("already exists");
+      await expect(bedRepository.create("org123", "b1", "f1", "r1", { name: "A", defaultMonthlyRate: 100, defaultDailyRate: 10 })).rejects.toThrow("already exists");
     });
   });
 
   describe("deactivate", () => {
     it("blocked when bed is occupied", async () => {
-      (getDoc as jest.Mock).mockResolvedValue({ exists: () => true, data: () => ({ status: "occupied" }), id: "bed1" });
-      await expect(bedRepository.deactivate("bed1")).rejects.toThrow("Cannot deactivate an occupied bed");
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => true, data: () => ({ status: "occupied", organizationId: "org123" }), id: "bed1" });
+      await expect(bedRepository.deactivate("org123", "bed1")).rejects.toThrow("Cannot deactivate an occupied bed");
     });
 
     it("allows deactivation if vacant", async () => {
-      (getDoc as jest.Mock).mockResolvedValue({ exists: () => true, data: () => ({ status: "vacant" }), id: "bed1" });
-      await bedRepository.deactivate("bed1");
+      (getDoc as jest.Mock).mockResolvedValue({ exists: () => true, data: () => ({ status: "vacant", organizationId: "org123" }), id: "bed1" });
+      await bedRepository.deactivate("org123", "bed1");
       expect(updateDoc).toHaveBeenCalled();
     });
   });

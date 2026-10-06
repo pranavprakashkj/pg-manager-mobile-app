@@ -29,6 +29,7 @@ function docToFloor(docSnap: import("firebase/firestore").DocumentSnapshot): Flo
   if (!data) throw new Error("Floor document has no data");
   return {
     id: docSnap.id,
+    organizationId: data.organizationId,
     buildingId: data.buildingId,
     name: data.name,
     sortOrder: data.sortOrder,
@@ -40,18 +41,20 @@ function docToFloor(docSnap: import("firebase/firestore").DocumentSnapshot): Flo
 
 export const floorRepository = {
   
-  async getAllActive(): Promise<Floor[]> {
+  async getAllActive(organizationId: string): Promise<Floor[]> {
     const q = query(
       floorsRef(),
+      where("organizationId", "==", organizationId),
       where("isActive", "==", true)
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(docToFloor);
   },
 
-  async getByBuildingId(buildingId: string): Promise<Floor[]> {
+  async getByBuildingId(organizationId: string, buildingId: string): Promise<Floor[]> {
     const q = query(
       floorsRef(),
+      where("organizationId", "==", organizationId),
       where("buildingId", "==", buildingId),
       where("isActive", "==", true),
       orderBy("sortOrder")
@@ -60,24 +63,29 @@ export const floorRepository = {
     return snapshot.docs.map(docToFloor);
   },
 
-  async findById(id: string): Promise<Floor | null> {
+  async findById(organizationId: string, id: string): Promise<Floor | null> {
     const docSnap = await getDoc(floorDocRef(id));
     if (!docSnap.exists()) return null;
-    return docToFloor(docSnap);
+    const floor = docToFloor(docSnap);
+    if (floor.organizationId !== organizationId) return null;
+    return floor;
   },
 
-  async getById(id: string): Promise<Floor> {
+  async getById(organizationId: string, id: string): Promise<Floor> {
     const docSnap = await getDoc(floorDocRef(id));
     if (!docSnap.exists()) throw new Error("Floor not found");
-    return docToFloor(docSnap);
+    const floor = docToFloor(docSnap);
+    if (floor.organizationId !== organizationId) throw new Error("Unauthorized access to floor");
+    return floor;
   },
 
   async create(
+    organizationId: string,
     buildingId: string,
     data: FloorFormData,
     sortOrder: number
   ): Promise<string> {
-    const building = await buildingRepository.findById(buildingId);
+    const building = await buildingRepository.findById(organizationId, buildingId);
     if (!building) {
       throw new Error("Cannot add floor to a nonexistent building");
     }
@@ -86,6 +94,7 @@ export const floorRepository = {
     }
 
     const docRef = await addDoc(floorsRef(), {
+      organizationId,
       buildingId,
       name: data.name.trim(),
       sortOrder,
@@ -96,22 +105,24 @@ export const floorRepository = {
     return docRef.id;
   },
 
-  async update(id: string, data: FloorFormData): Promise<void> {
+  async update(organizationId: string, id: string, data: FloorFormData): Promise<void> {
+    await this.getById(organizationId, id); // Verify ownership
     await updateDoc(floorDocRef(id), {
       name: data.name.trim(),
       updatedAt: serverTimestamp(),
     });
   },
 
-  async deactivate(id: string): Promise<void> {
+  async deactivate(organizationId: string, id: string): Promise<void> {
+    await this.getById(organizationId, id); // Verify ownership
     await updateDoc(floorDocRef(id), {
       isActive: false,
       updatedAt: serverTimestamp(),
     });
   },
 
-  async getNextSortOrder(buildingId: string): Promise<number> {
-    const floors = await floorRepository.getByBuildingId(buildingId);
+  async getNextSortOrder(organizationId: string, buildingId: string): Promise<number> {
+    const floors = await floorRepository.getByBuildingId(organizationId, buildingId);
     if (floors.length === 0) return 0;
     return Math.max(...floors.map((f) => f.sortOrder)) + 1;
   },
