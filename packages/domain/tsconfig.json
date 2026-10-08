@@ -1,0 +1,17 @@
+{
+  // Source typecheck with NO ambient types (no Node, React Native or DOM globals),
+  // which proves the domain stays portable across mobile, Workers and Node.
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["es2022"],
+    "types": [],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/__tests__/**"]
+}

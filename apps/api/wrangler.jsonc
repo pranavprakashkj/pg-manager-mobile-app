@@ -1,0 +1,13 @@
+// PG Manager API (skeleton). Not deployed yet.
+// Future bindings (added with the migration batches, not now): Hyperdrive (Neon), R2, Queues,
+// and secrets such as CLERK_JWT_KEY via `wrangler secret put`.
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "pg-manager-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "observability": { "enabled": true },
+  "vars": {
+    "API_VERSION": "0.0.0"
+  }
+}

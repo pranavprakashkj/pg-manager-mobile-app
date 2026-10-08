@@ -1,0 +1,22 @@
+// Moved to @pg-manager/domain (portable). Re-exported so existing imports keep working.
+export {
+  EMPTY_COUNTS,
+  countBeds,
+  sumCounts,
+  occupancyRate,
+  buildInventoryTree,
+  totalCounts,
+  totalRooms,
+  countRoomsByFilter,
+  filterInventory,
+  monthlyRateRange,
+  bedCode,
+  findRoom,
+  findFloor,
+  hasOpenBeds,
+  type BedCounts,
+  type RoomNode,
+  type FloorNode,
+  type BuildingNode,
+  type InventoryFilter,
+} from "@pg-manager/domain";

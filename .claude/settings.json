@@ -1,4 +1,11 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(grep -E 'serviceAccount|\\\\.env|\\\\.log|patch_|rewrite|script\\\\.js|init-firebase|\\\\.png$')",
+      "Bash(git check-ignore *)",
+      "WebFetch(domain:docs.expo.dev)"
+    ]
+  },
   "enabledPlugins": {
     "expo@claude-plugins-official": true
   }

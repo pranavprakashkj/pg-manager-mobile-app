@@ -9,18 +9,16 @@ import * as fs from "fs";
 let testEnv: RulesTestEnvironment;
 
 before(async () => {
-  try { process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
-process.env.FIREBASE_EMULATOR_HUB = "127.0.0.1:4400";
-testEnv = await initializeTestEnvironment({
+  // `firebase emulators:exec` sets FIRESTORE_EMULATOR_HOST; default to the standard port otherwise.
+  const [host, port] = (process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080").split(":");
+  testEnv = await initializeTestEnvironment({
     projectId: "pg-manager-rules-test",
     firestore: {
-host: "127.0.0.1",
-port: 8080,
+      host,
+      port: Number(port),
       rules: fs.readFileSync("firestore.rules", "utf8"),
-      
     },
   });
-} catch (e) { console.error("INIT ERROR:", e); throw e; }
 });
 
 beforeEach(async () => {
@@ -170,6 +168,11 @@ describe("Firestore Security Rules", () => {
       
       await assertSucceeds(ownerDb.doc("buildings/b1").set({ organizationId: ORG_ID }));
       await assertSucceeds(adminDb.doc("buildings/b2").set({ organizationId: ORG_ID }));
+    });
+
+    it("14a. Owner can rename their organization", async () => {
+      const ownerDb = testEnv.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(ownerDb.doc(`organizations/${ORG_ID}`).update({ name: "Renamed PG" }));
     });
 
     it("14. Admin cannot modify organization-level settings", async () => {

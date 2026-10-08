@@ -41,7 +41,9 @@ service cloud.firestore {
     // ─── Organizations ───
     match /organizations/{orgId} {
       allow read: if hasActiveMembership(orgId);
-      allow update: if isOwner(orgId) && request.resource.data.id == orgId;
+      // Organization documents carry no `id` field (the doc ID is the org ID),
+      // so updates are gated on ownership alone.
+      allow update: if isOwner(orgId);
 
       // Organization creation is a batched write: org + owner membership
       allow create: if isAuthenticated() &&
@@ -53,7 +55,9 @@ service cloud.firestore {
 
     // ─── Organization Memberships ───
     match /organizationMembers/{membershipId} {
-      allow read: if resource.data.userId == request.auth.uid || hasActiveMembership(resource.data.organizationId);
+      allow get: if resource.data.userId == request.auth.uid || hasActiveMembership(resource.data.organizationId);
+      allow list: if resource.data.userId == request.auth.uid;
+      allow list: if hasActiveMembership(resource.data.organizationId);
       allow update: if isOwner(resource.data.organizationId) &&
                        request.resource.data.organizationId == resource.data.organizationId &&
                        request.resource.data.userId == resource.data.userId;

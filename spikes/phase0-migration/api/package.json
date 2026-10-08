@@ -1,0 +1,28 @@
+{
+  "name": "pgm-phase0-spike-api",
+  "private": true,
+  "description": "DISPOSABLE Phase 0 migration spike: Clerk token -> Cloudflare Worker (Hono) -> Postgres via Hyperdrive. Not production code; not imported by the app.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev --port 8787",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:local:init": "bash scripts/local-db.sh init",
+    "db:local:start": "bash scripts/local-db.sh start",
+    "db:local:stop": "bash scripts/local-db.sh stop",
+    "db:seed": "node scripts/seed.mjs",
+    "token:local": "node scripts/mint-local-token.mjs",
+    "bench": "node scripts/bench.mjs"
+  },
+  "dependencies": {
+    "@clerk/backend": "3.23.0",
+    "hono": "4.13.13",
+    "postgres": "3.4.9"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261007.1",
+    "jose": "6.2.12",
+    "typescript": "~6.0.3",
+    "wrangler": "4.148.0"
+  }
+}

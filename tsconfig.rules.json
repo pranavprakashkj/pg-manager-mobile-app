@@ -1,0 +1,12 @@
+{
+  "//": "ts-node settings for the Mocha security-rules suite (npm run test:rules).",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node10",
+    "ignoreDeprecations": "6.0",
+    "target": "es2022",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "files": ["firestore.rules.test.ts"]
+}

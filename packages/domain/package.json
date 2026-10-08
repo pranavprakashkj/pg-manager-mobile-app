@@ -1,0 +1,20 @@
+{
+  "name": "@pg-manager/domain",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Portable PG Manager domain: entity types, Zod schemas, pure business logic, repository interfaces and API contracts.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.test.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

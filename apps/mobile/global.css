@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * PG Manager V2 design tokens (source: V2 design artifact, ds/pgm/tokens.json).
+ * Colors are space-separated RGB channels so Tailwind's <alpha-value> works.
+ * Keep in sync with src/theme/tokens.ts, which serves JS-only consumers
+ * (icons, ActivityIndicator, navigator options).
+ */
+:root {
+  --primary: 29 78 216;
+  --primary-hover: 30 64 175;
+  --primary-text: 29 78 216;
+  --primary-soft: 239 246 255;
+  --primary-soft-ink: 30 64 175;
+  --on-primary: 255 255 255;
+  --accent: 37 99 235;
+  --ink: 15 23 42;
+  --ink-muted: 71 85 105;
+  --ink-subtle: 91 107 128;
+  --surface-page: 244 246 251;
+  --surface-card: 255 255 255;
+  --surface-sunken: 241 245 249;
+  --border: 226 232 240;
+  --border-control: 122 135 156;
+  --track: 226 232 240;
+  --focus-ring: 37 99 235;
+  --success: 21 128 61;
+  --success-soft: 236 253 243;
+  --success-ink: 22 101 52;
+  --warning: 180 83 9;
+  --warning-soft: 255 247 230;
+  --warning-ink: 146 64 14;
+  --danger: 185 28 28;
+  --danger-soft: 254 242 242;
+  --danger-ink: 153 27 27;
+  --danger-solid: 220 38 38;
+  --neutral-soft: 241 245 249;
+  --avatar-1: 253 231 223;
+  --avatar-2: 224 231 255;
+  --avatar-3: 220 252 231;
+  --avatar-4: 241 245 249;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: 37 99 235;
+    --primary-hover: 29 78 216;
+    --primary-text: 147 197 253;
+    --primary-soft: 22 36 74;
+    --primary-soft-ink: 191 219 254;
+    --on-primary: 255 255 255;
+    --accent: 96 165 250;
+    --ink: 241 245 249;
+    --ink-muted: 165 177 196;
+    --ink-subtle: 138 152 173;
+    --surface-page: 11 17 32;
+    --surface-card: 19 28 46;
+    --surface-sunken: 27 37 57;
+    --border: 38 50 74;
+    --border-control: 100 116 139;
+    --track: 38 50 74;
+    --focus-ring: 147 197 253;
+    --success: 74 222 128;
+    --success-soft: 15 42 28;
+    --success-ink: 134 239 172;
+    --warning: 251 191 36;
+    --warning-soft: 46 34 11;
+    --warning-ink: 252 211 77;
+    --danger: 248 113 113;
+    --danger-soft: 52 20 22;
+    --danger-ink: 252 165 165;
+    --danger-solid: 220 38 38;
+    --neutral-soft: 34 45 66;
+    --avatar-1: 58 34 25;
+    --avatar-2: 30 37 80;
+    --avatar-3: 18 50 34;
+    --avatar-4: 36 48 73;
+  }
+}

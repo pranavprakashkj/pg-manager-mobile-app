@@ -1,0 +1,25 @@
+// DISPOSABLE Phase 0 spike Worker. See ../README.md.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pgm-phase0-spike",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  // postgres.js needs Node TCP sockets via nodejs_compat.
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "hyperdrive": [
+    {
+      "binding": "HYPERDRIVE",
+      // Replace after: npx wrangler hyperdrive create pgm-spike --connection-string="<NEON_URL>"
+      // Local dev uses CLOUDFLARE_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE instead (see README).
+      "id": "00000000000000000000000000000000"
+    }
+  ],
+  "vars": {
+    // Comma-separated allowed `azp` origins for Clerk session tokens. Empty = not enforced (spike only).
+    "CLERK_AUTHORIZED_PARTIES": ""
+  }
+  // Secrets (never in this file, never in the mobile app):
+  //   CLERK_JWT_KEY     PEM public key from Clerk Dashboard → API keys → JWT public key (networkless verification)
+  //   CLERK_SECRET_KEY  optional fallback: verify via JWKS fetched from Clerk (adds a network hop on cold isolates)
+}
